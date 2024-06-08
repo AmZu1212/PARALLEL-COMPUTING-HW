@@ -1,20 +1,8 @@
-#include <lambda.h>
+#include "lambda.h"
 #include <iostream>
 #include <algorithm>
 
 
-// gets an int, returns its absolute value.
-int abs(int num)
-{
-    if (num < 0)
-    {
-        return num * -1;
-    }
-    else
-    {
-        return num;
-    }
-}
 
 // this function initializes the by_value, by_ref, cmp_lambda
 // lambda pointers.
@@ -69,7 +57,22 @@ void init_globals()
      */
     cmp_lambda = [](int &a, int &b) -> bool
     {
-        return abs(a) < abs(b);
+
+        int nums[2] = {a, b}; // backup
+        // make sure they're both positive
+        for(int i = 0; i < 2; i++)
+        {
+            if(nums[i] < 0)
+            {
+                nums[i] *= -1;
+            }
+        }
+
+        //forgot to increment the comaprison counter whoops
+        ++g_counter;
+        
+        // convention is "a < b ?"
+        return nums[0] < nums[1];
     };
 }
 
