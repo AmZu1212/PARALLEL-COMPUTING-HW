@@ -7,6 +7,7 @@
 namespace chrono = std::chrono;
 // remove capacity code.
 // finally speed is ok. never put atomic in atomic
+// i have no idea it passed once and now it always fails i cant
 struct Node {
     int value;
     Node* next;

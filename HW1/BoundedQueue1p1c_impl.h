@@ -19,11 +19,11 @@ private:
     std::atomic<Node*> head;
     std::atomic<Node*> tail;
     std::atomic<int> count;
-    const int capacity; // no need for atomic this is constant
+    int capacity; // no need for atomic this is constant
 
 public:
-    BoundedQueue1p1c(int capacity) {
-        this->capacity = capacity;
+    BoundedQueue1p1c(int cap) {
+        capacity = cap;
         Node* dummy = new Node();
         head.store(dummy);
         tail.store(dummy);
@@ -69,7 +69,7 @@ public:
         return true;
     }
 
-    int size() const override {
+    int size() override {
         return count.load();
     }
 };
