@@ -3,73 +3,61 @@
 #include <thread>
 #include <iostream>
 #include <chrono>
+#include <vector>
 
 namespace chrono = std::chrono;
-// need to speed this up
 
-struct Node {
-    int value;
-    Node* next;
-    Node(int val = 0) : value(val), next(nullptr) {}
-};
+// trying again the rotating array.
+// i forgot to use atomics damn
+class BoundedQueue1p1c : public BoundedQueueAbstract_1p1c
+{
+    private:
+        // changed everything to atomics, buffer has to be atomic
+        std::vector<std::atomic<int>> buffer;
+        int head;
+        int tail;
+        std::atomic<int> count;
+        int capacity;
+        // not using memory flags.
+        // load is read, store is write.
 
+        // i think head and tail dont need to be atomic because
+        // there is only 1 producer and 1 consumer, and 
+        // each one updates the different index.
+    public:
+        BoundedQueue1p1c(int capacity)
+            : buffer(capacity), head(0), tail(0), count(0), capacity(capacity) {}
 
-class BoundedQueue1p1c : BoundedQueueAbstract_1p1c {
-private:
-    std::atomic<Node*> head;
-    std::atomic<Node*> tail;
-    std::atomic<int> count;
-    int capacity; // no need for atomic this is constant
-
-public:
-    BoundedQueue1p1c(int cap) {
-        capacity = cap;
-        Node* dummy = new Node();
-        head.store(dummy);
-        tail.store(dummy);
-        count.store(0);
-    }
-
-    ~BoundedQueue1p1c() {
-        while (head.load() != nullptr) {
-            Node* tmp = head.load();
-            head.store(head.load()->next);
-            delete tmp;
-        }
-    }
-
-    // pop is the same as unbounded
-    bool pop(int &val) override {
-        Node* head_node = head.load();
-        Node* next_node = head_node->next;
-
-        if (next_node == nullptr) {
-            // Queue is empty
-            return false; 
+        int size() override
+        {
+            return count.load();
         }
 
-        val = next_node->value;
-        head.store(next_node);
-        delete head_node;
-        count.fetch_sub(1);
-        return true;
-    }
+        bool pop(int &val) override
+        {
+            if (count.load() == 0)
+            {
+                return false; // Queue is empty
+            }
 
-    bool push(int value) override {
-        if (count.load() >= capacity) {
-            // Queue is full
-            return false;
+            val = buffer[head].load();
+            head = (head + 1) % capacity; // update head mod n
+            count.fetch_sub(1);// this is -- in atomics
+
+            return true;
         }
 
-        Node* new_node = new Node(value);
-        Node* old_tail = tail.exchange(new_node);
-        old_tail->next = new_node;
-        count.fetch_add(1);
+        bool push(int v) override
+        {
+            if (count.load() == capacity)
+            {
+                return false; // Queue is full
+            }
 
-        return true;
-    }
+            buffer[tail].store(v);
+            tail = (tail + 1) % capacity; // update tail mod n
+            count.fetch_add(1);// this is ++ in atomics
 
-    int size() override {
-        return count.load();
-    }
+            return true;
+        }
 };

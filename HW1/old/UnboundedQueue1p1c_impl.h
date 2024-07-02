@@ -5,7 +5,9 @@
 #include <chrono>
 
 namespace chrono = std::chrono;
-// need to speed this up
+// remove capacity code.
+// finally speed is ok. never put atomic in atomic
+// i have no idea it passed once and now it always fails i cant
 struct Node {
     int value;
     Node* next;
@@ -20,14 +22,14 @@ private:
     std::atomic<int> count;
 
 public:
-    UnboundedQueue1p1c() {// make the dummy
+    UnboundedQueue1p1c() {
         Node* dummy = new Node();
         head.store(dummy);
         tail.store(dummy);
         count.store(0);
     }
 
-    ~UnboundedQueue1p1c() {// kill every node
+    ~UnboundedQueue1p1c() {
         while (head.load() != nullptr) {
             Node* tmp = head.load();
             head.store(head.load()->next);
@@ -35,22 +37,19 @@ public:
         }
     }
 
-    int size() const override {
-        return count.load();
-    }
-
-    bool pop(int &val) override {// remove head, and update pointer
+    bool pop(int &val) override {
         Node* head_node = head.load();
         Node* next_node = head_node->next;
 
         if (next_node == nullptr) {
-            return false; // Queue is empty
+            // Queue is empty
+            return false; 
         }
 
         val = next_node->value;
         head.store(next_node);
         delete head_node;
-        count.fetch_sub(1); // this is -- in atomics
+        count.fetch_sub(1);
         return true;
     }
 
@@ -58,6 +57,10 @@ public:
         Node* new_node = new Node(value);
         Node* old_tail = tail.exchange(new_node);
         old_tail->next = new_node;
-        count.fetch_add(1); // this is ++ in atomics
-    }  
+        count.fetch_add(1);
+    }
+
+    int size() const override {
+        return count.load();
+    }
 };
