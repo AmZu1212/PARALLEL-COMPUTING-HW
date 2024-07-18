@@ -18,12 +18,6 @@ class BoundedQueue1p1c : public BoundedQueueAbstract_1p1c
         int tail;
         std::atomic<int> count;
         int capacity;
-        // not using memory flags.
-        // load is read, store is write.
-
-        // i think head and tail dont need to be atomic because
-        // there is only 1 producer and 1 consumer, and 
-        // each one updates the different index.
     public:
         BoundedQueue1p1c(int capacity)
             : buffer(capacity), head(0), tail(0), count(0), capacity(capacity) {}
