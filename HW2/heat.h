@@ -12,7 +12,7 @@ void heat (int mode);
 //Otherwise, you will face compilation errors during automatic testing.
 
 // only use TBB
-// 100% auto graded
+// 100% auto graded.
 //
 
 
