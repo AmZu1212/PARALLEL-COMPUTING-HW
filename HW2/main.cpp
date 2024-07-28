@@ -4,22 +4,38 @@
 #include <vector>
 
 //const int N_THREADS = 16; // Number of threads to test with
+std::atomic<int> threadLoopCount(0);
+std::atomic<int> globalThreadCount(0);
+std::atomic<int> globalPrintingPing(0);
+std::mutex LOOPING_MUTEX;
+
 
 void threadFunction(BinaryTreeBarrier &barrier, int threadID) {
     thread_id = threadID;
-    //std::cout << "main(): A thread is about to enter the barrier(). It's ID is: "<< threadID <<"\n";
-    barrier.barrier();
-    //PRINTING_MUTEX.lock();
-    //    std::cout << "main(): Thread "<< threadID <<" has exited the barrier().\n";
-    //PRINTING_MUTEX.unlock();
-    //std::cout << "main(): A thread has exited the barrier().\n";
+    
+    for (size_t i = 0; i < threadLoopCount; i++)
+    {
+        barrier.barrier();
+        PRINTING_MUTEX.lock();
+            std::cout << "threadFunction(): Thread "<< threadID <<" has exited the barrier().\n";
+            globalPrintingPing++;
+            if(globalPrintingPing == globalThreadCount)
+            {
+                std::cout << "threadFunction(): Thread " << threadID << " was the last one to leave barrier " << i << "." << endl;
+                std::cout << "=========================================================================================================" << endl;
+                globalPrintingPing = 0;
+            }
+        PRINTING_MUTEX.unlock();
+    }
 }
 
 int main(int argc, char** argv) {
     int threadCount = atoi(argv[1]);
-    //PRINTING_MUTEX.lock();
-    //    std::cout << "main(): Thread count is: "<< threadCount << "." << endl;
-    //PRINTING_MUTEX.unlock();
+    globalThreadCount = threadCount;
+    threadLoopCount = atoi(argv[2]);
+    PRINTING_MUTEX.lock();
+        std::cout << "main(): Thread count is: "<< threadCount << "." << endl;
+    PRINTING_MUTEX.unlock();
     BinaryTreeBarrier barrier(threadCount); // Initialize barrier with N_THREADS
 
     std::vector<std::thread> threads;
@@ -33,7 +49,7 @@ int main(int argc, char** argv) {
         t.join(); // Wait for all threads to complete
     }
 
-    //std::cout << "main(): Done running and joined the threads.\n";
+    std::cout << "main(): Done running and joined the threads.\n";
 
     return 0;
 }
