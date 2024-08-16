@@ -19,7 +19,6 @@ OneParticle parallel_particles[nParticles];
 bool validate_particles()
 {
     const float epsilon = 0.1f;
-
     for (int i = 0; i < nParticles; i++)
     {
         OneParticle p, p1;
@@ -32,6 +31,7 @@ bool validate_particles()
             return false;
         }
     }
+
     return true;
 }
 
@@ -137,9 +137,12 @@ int main()
 
     if (validate_particles())
     {
+        cout << "test successful!!!!!!" << endl;
         cout << endl
              << "Speedup=" << ((final_performance[1] != 1) ? final_performance[0] / final_performance[1] : 1)
              << endl;
+    }else{
+        cout << "validate_particles failed!, you have logic mistakes." << endl;
     }
     return 0;
 }
